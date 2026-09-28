@@ -1,3 +1,5 @@
+/private/tmp/claude-501/-Users-allan-projects-keycaps/fa465ea8-d031-4016-8134-c6dbb5cb1e90/scratchpad/cleanvenv/lib/python3.13/site-packages/trimesh/triangles.py:302: RuntimeWarning: invalid value encountered in divide
+  center_mass = integrated[1:4] / volume
 == rendering ozone-strike-battle/left-shift-ansi.scad ==
    wrote ozone-strike-battle/left-shift-ansi.stl
 == mesh integrity ==
@@ -27,5 +29,6 @@
   [PASS] first layer is the top-plate rim, not a point        119 vertices within 0.25 mm of the bed
   [PASS] no overhang past 45 deg above the bed                1.0 mm^2 above the dish + 532.1 mm^2 of dish bridged over the bed
   [info] drafted walls                                        1376.3 mm^2 at <=11.8 deg from vertical
+   wrote ozone-strike-battle/left-shift-ansi.json
 
 RESULT: ALL CHECKS PASSED

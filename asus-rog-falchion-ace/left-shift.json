@@ -1,0 +1,162 @@
+{
+  "key": "left-shift",
+  "keyboard": "asus-rog-falchion-ace",
+  "source": "asus-rog-falchion-ace/left-shift.scad",
+  "stl": "left-shift.stl",
+  "passed": true,
+  "size_mm": {
+    "x": 22.863,
+    "y": 18.1,
+    "z": 9.975
+  },
+  "volume_mm3": 1158.2,
+  "pla_grams": 1.44,
+  "parameters": {
+    "U": 19.05,
+    "bevel": 0.6,
+    "body_x": 22.8625,
+    "body_y": 18.1,
+    "bore_clr": 0.35,
+    "cross_clr_t": 0.22,
+    "cross_clr_w": 0.12,
+    "cross_depth": 4.3,
+    "cross_t": 1.17,
+    "cross_w": 4.1,
+    "dish_axis": "y",
+    "dish_depth": 0.9,
+    "dish_r": 25.0,
+    "h_center": 8.52,
+    "hook_len": 6.0,
+    "hook_w": 5.5,
+    "hook_z0": 2.6,
+    "led_clear_h": 0.0,
+    "legend_mode": "emboss",
+    "r_bot": 1.2,
+    "r_top": 2.6,
+    "rib_t": 1.2,
+    "rib_z0": 5.0,
+    "ribs_on": 0.0,
+    "roof": 1.7,
+    "row_tilt": 12.0,
+    "skirt_z": 4.2,
+    "stab_style": "none",
+    "stab_wire_d": 1.3,
+    "stab_x": 11.9063,
+    "stem_od": 5.6,
+    "stem_top_gap": 0.9,
+    "stem_z0": 0.5,
+    "taper": 2.1,
+    "throat_w": 1.2,
+    "units": 1.25,
+    "wall": 1.55,
+    "wall_skirt": 1.15,
+    "wire_z": 4.2
+  },
+  "checks": [
+    {
+      "section": "mesh integrity",
+      "name": "watertight, single closed solid",
+      "ok": true,
+      "detail": "watertight=True bodies=1 euler=2",
+      "kind": "check"
+    },
+    {
+      "section": "mesh integrity",
+      "name": "consistent winding / positive volume",
+      "ok": true,
+      "detail": "volume=1158.2 mm^3 (~1.44 g PLA solid)",
+      "kind": "check"
+    },
+    {
+      "section": "outside dimensions",
+      "name": "1.25u body width (X)",
+      "ok": true,
+      "detail": "22.863 mm  (1.25u pitch = 23.8125)",
+      "kind": "check"
+    },
+    {
+      "section": "outside dimensions",
+      "name": "body depth (Y)",
+      "ok": true,
+      "detail": "18.100 mm  (1u pitch = 19.05)",
+      "kind": "check"
+    },
+    {
+      "section": "outside dimensions",
+      "name": "fits inside the key pitch envelope",
+      "ok": true,
+      "detail": "gap to the neighbours = 0.47 mm per side, 0.47 mm front/back",
+      "kind": "check"
+    },
+    {
+      "section": "outside dimensions",
+      "name": "total height",
+      "ok": true,
+      "detail": "9.97 mm",
+      "kind": "check"
+    },
+    {
+      "section": "MX cross stem",
+      "name": "nominal MX cross (4.10 x 1.17) enters",
+      "ok": true,
+      "detail": "interference = 0.0000 mm^3",
+      "kind": "check"
+    },
+    {
+      "section": "MX cross stem",
+      "name": "socket is not oversized (+0.30 probe does clash)",
+      "ok": true,
+      "detail": "interference = 3.802 mm^3 -> grip present",
+      "kind": "check"
+    },
+    {
+      "section": "MX cross stem",
+      "name": "stem is centred on the key",
+      "ok": true,
+      "detail": "socket centroid X=-0.000 Y=-0.000",
+      "kind": "check"
+    },
+    {
+      "section": "switch / LED clearance",
+      "name": "interior never tighter than a stock cap of the same sculpt",
+      "ok": true,
+      "detail": "worst margin +1.14 mm at z = 0.2 mm (checked to z = 5.0)",
+      "kind": "check"
+    },
+    {
+      "section": "switch / LED clearance",
+      "name": "north LED column",
+      "ok": null,
+      "detail": "not checked: led_clear_h = 0, the board lights each key with an SMD LED under the switch, nothing enters the cap",
+      "kind": "info"
+    },
+    {
+      "section": "printability",
+      "name": "print orientation sits flat on z = 0",
+      "ok": true,
+      "detail": "min z = 0.000000",
+      "kind": "check"
+    },
+    {
+      "section": "printability",
+      "name": "first layer is the top-plate rim, not a point",
+      "ok": true,
+      "detail": "182 vertices within 0.25 mm of the bed",
+      "kind": "check"
+    },
+    {
+      "section": "printability",
+      "name": "no overhang past 45 deg above the bed",
+      "ok": true,
+      "detail": "0.0 mm^2 above the dish + 258.5 mm^2 of dish bridged over the bed",
+      "kind": "check"
+    },
+    {
+      "section": "printability",
+      "name": "drafted walls",
+      "ok": null,
+      "detail": "673.3 mm^2 at <=14.9 deg from vertical",
+      "kind": "info"
+    }
+  ]
+}

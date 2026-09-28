@@ -20,5 +20,6 @@
   [PASS] first layer is the top-plate rim, not a point        182 vertices within 0.25 mm of the bed
   [PASS] no overhang past 45 deg above the bed                0.0 mm^2 above the dish + 258.5 mm^2 of dish bridged over the bed
   [info] drafted walls                                        673.3 mm^2 at <=14.9 deg from vertical
+   wrote asus-rog-falchion-ace/left-shift.json
 
 RESULT: ALL CHECKS PASSED

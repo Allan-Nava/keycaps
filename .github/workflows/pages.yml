@@ -1,0 +1,74 @@
+name: pages
+
+# Publishes the catalogue at https://allan-nava.github.io/keycaps/
+#
+# The page is generated from the validator's own JSON output, so it cannot
+# claim a dimension the checks did not measure. It only deploys after
+# `validate` is green: publishing a keycap that fails its own checks would be
+# worse than publishing nothing.
+
+on:
+  workflow_run:
+    workflows: [validate]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Never let two deploys race; skip superseded ones rather than cancelling a
+# half-finished upload.
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  build:
+    name: build the catalogue
+    runs-on: ubuntu-latest
+    # workflow_run fires on failure too, so gate on the conclusion.
+    if: >
+      github.event_name == 'workflow_dispatch' ||
+      github.event.workflow_run.conclusion == 'success'
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      # No OpenSCAD and no Python packages needed: the site reads the JSON the
+      # validator already committed, and copies the STLs and drawings as-is.
+      - name: Build site/
+        run: python3 tools/make_site.py
+
+      - name: Every asset the page references must exist
+        run: |
+          python3 - <<'PY'
+          import os, re, sys
+          html = open("site/index.html", encoding="utf-8").read()
+          refs = sorted(set(re.findall(r'(?:src|href)="(assets/[^"]+)"', html)))
+          missing = [r for r in refs if not os.path.exists(os.path.join("site", r))]
+          print(f"{len(refs)} asset references, {len(missing)} missing")
+          for m in missing:
+              print(f"  missing: {m}")
+          sys.exit(1 if missing else 0)
+          PY
+
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    name: deploy
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

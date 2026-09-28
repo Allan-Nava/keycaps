@@ -23,13 +23,15 @@ machines and versions; see the tolerances below.
 """
 
 import argparse
+import json
 import os
 import sys
 
 import numpy as np
 import trimesh
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+HERE_ROOT = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE_ROOT)
 from scadparams import render                                   # noqa: E402
 
 # --- reference cap for the relative interior-clearance check ---------------
@@ -88,16 +90,28 @@ def clear_width(mesh, z, x=0.0):
 
 
 class Report:
+    """Prints the human report and records it for the machine-readable one."""
+
     def __init__(self):
         self.ok = True
+        self.entries = []
+        self.section = None
+
+    def group(self, title):
+        self.section = title
+        print(f"== {title} ==")
 
     def __call__(self, name, ok, detail):
         print(f"  [{'PASS' if ok else 'FAIL'}] {name:<52} {detail}")
         self.ok &= bool(ok)
+        self.entries.append({"section": self.section, "name": name,
+                             "ok": bool(ok), "detail": detail, "kind": "check"})
         return ok
 
     def info(self, name, detail):
         print(f"  [info] {name:<52} {detail}")
+        self.entries.append({"section": self.section, "name": name,
+                             "ok": None, "detail": detail, "kind": "info"})
 
 
 def main(scad, check=False, defines=None):
@@ -121,7 +135,7 @@ def main(scad, check=False, defines=None):
     lo, hi = m.bounds
     r = Report()
 
-    print("== mesh integrity ==")
+    r.group("mesh integrity")
     r("watertight, single closed solid", m.is_watertight and m.body_count == 1,
       f"watertight={m.is_watertight} bodies={m.body_count} "
       f"euler={m.euler_number}")
@@ -129,7 +143,7 @@ def main(scad, check=False, defines=None):
       m.is_winding_consistent and m.volume > 0,
       f"volume={m.volume:.1f} mm^3 (~{m.volume * 1.24 / 1000:.2f} g PLA solid)")
 
-    print("== outside dimensions ==")
+    r.group("outside dimensions")
     pitch_x, pitch_y = P["units"] * P["U"], P["U"]
     r(f'{P["units"]:g}u body width (X)', abs((hi[0] - lo[0]) - P["body_x"]) < 0.02,
       f'{hi[0] - lo[0]:.3f} mm  ({P["units"]:g}u pitch = {pitch_x:.4f})')
@@ -141,7 +155,7 @@ def main(scad, check=False, defines=None):
       f"side, {(pitch_y - (hi[1] - lo[1])) / 2:.2f} mm front/back")
     r("total height", 7.0 < (hi[2] - lo[2]) < 15.0, f"{hi[2] - lo[2]:.2f} mm")
 
-    print("== MX cross stem ==")
+    r.group("MX cross stem")
     r(f'nominal MX cross ({P["cross_w"]:.2f} x {P["cross_t"]:.2f}) enters',
       clash(m, cross_probe(P, 0.0)) < 1e-6,
       f"interference = {clash(m, cross_probe(P, 0.0)):.4f} mm^3")
@@ -154,7 +168,7 @@ def main(scad, check=False, defines=None):
       f"socket centroid X={ctr[0]:+.3f} Y={ctr[1]:+.3f}")
 
     if P.get("stab_style") == "costar":
-        print("== Costar stabiliser ==")
+        r.group("Costar stabiliser")
         sx_pair = (+P["stab_x"], -P["stab_x"])
         span = P["hook_len"] + 4
         for sx in sx_pair:
@@ -194,7 +208,7 @@ def main(scad, check=False, defines=None):
         r(f'stabiliser style "{P.get("stab_style")}" is implemented', False,
           "unknown style - nothing was validated")
 
-    print("== switch / LED clearance ==")
+    r.group("switch / LED clearance")
     # The exact switch top-housing envelope above the plate is not documented,
     # so the check is relative: this cap's interior must never be tighter than
     # a stock OEM 1u cap's interior at the same height.
@@ -220,7 +234,7 @@ def main(scad, check=False, defines=None):
                "not checked: led_clear_h = 0, the board lights each key with an "
                "SMD LED under the switch, nothing enters the cap")
 
-    print("== printability ==")
+    r.group("printability")
     r("print orientation sits flat on z = 0", abs(printed.bounds[0][2]) < 1e-6,
       f"min z = {printed.bounds[0][2]:.6f}")
     zs = printed.vertices[:, 2]
@@ -241,7 +255,7 @@ def main(scad, check=False, defines=None):
            f"deg from vertical")
 
     if check:
-        print("== committed STL is current ==")
+        r.group("committed STL is current")
         if not os.path.exists(out):
             r(f"{name}.stl exists", False, "missing - run without --check")
         else:
@@ -257,6 +271,29 @@ def main(scad, check=False, defines=None):
               f"{have.volume:.1f} vs {printed.volume:.1f} mm^3, "
               f"{dvol * 100:.2f}% apart (tolerance "
               f"{CHECK_VOLUME_TOL * 100:.0f}%)")
+
+    # Machine-readable twin of the report above. The website is generated from
+    # these files, so what it claims about a keycap is what the validator
+    # measured, not something retyped into a template.
+    if not check:
+        facts = {
+            "key": name,
+            "keyboard": os.path.basename(os.path.dirname(scad)),
+            "source": os.path.relpath(scad, os.path.dirname(HERE_ROOT)),
+            "stl": os.path.basename(out),
+            "passed": bool(r.ok),
+            "size_mm": {"x": round(float(hi[0] - lo[0]), 3),
+                        "y": round(float(hi[1] - lo[1]), 3),
+                        "z": round(float(hi[2] - lo[2]), 3)},
+            "volume_mm3": round(float(m.volume), 1),
+            "pla_grams": round(float(m.volume) * 1.24 / 1000, 2),
+            "parameters": {k: v for k, v in sorted(P.items())},
+            "checks": r.entries,
+        }
+        with open(base + ".json", "w", encoding="utf-8") as fh:
+            json.dump(facts, fh, indent=2, sort_keys=False)
+            fh.write("\n")
+        print(f"   wrote {os.path.relpath(base + '.json')}")
 
     print()
     print("RESULT:", "ALL CHECKS PASSED" if r.ok else "SOME CHECKS FAILED")

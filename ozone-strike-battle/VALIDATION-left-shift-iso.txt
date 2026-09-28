@@ -20,5 +20,6 @@
   [PASS] first layer is the top-plate rim, not a point        114 vertices within 0.25 mm of the bed
   [PASS] no overhang past 45 deg above the bed                0.0 mm^2 above the dish + 259.9 mm^2 of dish bridged over the bed
   [info] drafted walls                                        829.9 mm^2 at <=11.8 deg from vertical
+   wrote ozone-strike-battle/left-shift-iso.json
 
 RESULT: ALL CHECKS PASSED

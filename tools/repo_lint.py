@@ -3,7 +3,7 @@
 Repo hygiene checks that need neither OpenSCAD nor a render.
 
   * every keycap source has a committed STL next to it,
-  * every keycap source has a validation report,
+  * every keycap source has a validation report, text and JSON,
   * every keyboard directory has a README,
   * every keycap source includes the shared library,
   * no keycap source carries an undefined-looking parameter.
@@ -31,6 +31,8 @@ def main():
         for want, why in (
             (os.path.join(board, stem + ".stl"), "committed STL"),
             (os.path.join(board, f"VALIDATION-{stem}.txt"), "validation report"),
+            (os.path.join(board, stem + ".json"), "machine-readable validation "
+             "(the website is built from it)"),
         ):
             if not os.path.exists(os.path.join(HERE, want)):
                 problems.append(f"{rel}: missing {why} ({want})")
