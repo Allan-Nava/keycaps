@@ -11,18 +11,19 @@ be established before a single dimension is written.
 * Keyboard: ASUS ROG Falchion Ace
 * Switches: ROG NX
 * Layout: **ITA** (Italian, ISO)
-* Described as "TKL 60%"
+* Form factor: **65 %** (68 keys — dedicated arrow cluster and a right-hand
+  column), confirmed by the user on 2026-09-28
+
+## Settled
+
+* **65 %, 68 keys.** So, versus the Strike Battle: no F-row, no nav block, and
+  the right-hand side is cramped — the right Shift and the bottom row are
+  non-standard widths on this board and must be measured, not assumed from an
+  ANSI/ISO size table.
 
 ## Open questions — answer these first
 
-### 1. Form factor ⚠️
-
-The Falchion Ace is normally described as a **65 %** board (68 keys, with a
-dedicated arrow cluster and a right-hand column), **not** a 60 % and not a TKL.
-This matters because it changes which keys exist and which ones are stabilised.
-**Confirm against the actual keyboard before modelling anything.**
-
-### 2. Which key?
+### 1. Which key? ⚠️ blocking
 
 Not yet specified. The answer decides almost everything:
 
@@ -36,7 +37,7 @@ Note the ITA/ISO specifics: ISO left Shift is **1.25u**, ISO Enter is the tall
 L shape, and there is an extra key next to left Shift that ANSI does not have.
 Do not reuse the ANSI Shift reasoning from `ozone-strike-battle/`.
 
-### 3. Stabiliser style ⚠️ blocking
+### 2. Stabiliser style ⚠️ blocking
 
 Modern ASUS boards almost certainly use **Cherry-style clip-in plastic
 stabiliser stems**, not Costar wire. `lib/keycap_common.scad` implements
@@ -46,20 +47,20 @@ stem dimensions have to be measured or sourced first.
 So either the chosen key is unstabilised, or the Cherry stabiliser stem has to
 be added to the library, with its own provenance.
 
-### 4. ROG NX stem
+### 3. ROG NX stem
 
 ROG NX switches are MX-compatible in principle, so the `cross_w` / `cross_t`
 4.10 × 1.17 from the Cherry drawing should carry over — **but confirm**, and
 confirm the stem height, since it sets `cross_depth`.
 
-### 5. Profile
+### 4. Profile
 
 ASUS does not publish a keycap profile for this board. Needs: cap heights,
 row sculpt, whether the top is cylindrical or spherical, and the plastic body
 size versus the 19.05 pitch. Same method as the Strike Battle: find a review
 that *measured* something, and reconcile the gap from it.
 
-### 6. Backlight
+### 5. Backlight
 
 The Falchion Ace is RGB — check whether the LED is SMD (under the switch, no
 clearance problem) or a north-facing in-switch LED (needs the clearance the
