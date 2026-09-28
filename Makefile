@@ -1,5 +1,5 @@
 PY   ?= python3
-KEYS := $(wildcard */*.scad)
+KEYS := $(filter-out lib/%,$(wildcard */*.scad))
 
 .PHONY: all validate drawings clean
 all: validate drawings
