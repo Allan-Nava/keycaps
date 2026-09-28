@@ -29,6 +29,8 @@ permissions:
 
 env:
   OPENSCAD_SNAPSHOT: "2026.09.27"
+  # headless: export to STL needs no display, but Qt still wants a platform
+  QT_QPA_PLATFORM: offscreen
 
 jobs:
   selftest:
@@ -45,9 +47,24 @@ jobs:
       - name: System libraries and fonts
         run: |
           sudo apt-get update -qq
+          # urw-base35 gives fontconfig a metric-compatible Nimbus Sans to
+          # substitute for Helvetica, which a text legend asks for. Without it
+          # the substitute is arbitrary and the engraved glyph changes shape.
+          #
+          # The rest is the graphics/Qt runtime. An AppImage bundles the
+          # application's own libraries but deliberately expects the system to
+          # provide the GL/EGL stack, so without these it dies with
+          # "libEGL.so.1: cannot open shared object file" before printing its
+          # own version.
           sudo apt-get install -y --no-install-recommends \
             fonts-urw-base35 fonts-liberation \
-            libgl1 libglu1-mesa libfontconfig1 libxi6 libxrender1
+            libegl1 libgl1 libglx0 libopengl0 libglu1-mesa \
+            libfontconfig1 libfreetype6 libdbus-1-3 \
+            libxi6 libxrender1 libxrandr2 libxcursor1 libxinerama1 \
+            libxkbcommon0 libxkbcommon-x11-0 \
+            libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 \
+            libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xinerama0 \
+            libxcb-xkb1
 
       - name: Cache OpenSCAD
         id: cache-openscad

@@ -73,5 +73,22 @@ sudo mkdir -p "$(dirname "$PREFIX")"
 sudo mv squashfs-root "$PREFIX"
 sudo ln -sf "$PREFIX/AppRun" /usr/local/bin/openscad
 
+# If a system library is missing, report EVERY missing one at once. Finding
+# them one CI run at a time is a waste of everyone's afternoon.
+if ! openscad --version >/dev/null 2>&1; then
+    echo "::error::openscad will not start. Missing shared libraries:"
+    for bin in "$PREFIX/usr/bin/openscad" "$PREFIX/AppRun"; do
+        [ -f "$bin" ] || continue
+        LD_LIBRARY_PATH="$PREFIX/usr/lib:${LD_LIBRARY_PATH:-}" \
+            ldd "$bin" 2>/dev/null | grep "not found" | sort -u || true
+    done
+    for lib in "$PREFIX"/usr/lib/*.so*; do
+        LD_LIBRARY_PATH="$PREFIX/usr/lib:${LD_LIBRARY_PATH:-}" \
+            ldd "$lib" 2>/dev/null | grep "not found" || true
+    done | sort -u
+    openscad --version || true
+    exit 1
+fi
+
 openscad --version 2>&1 | head -1
 openscad --info 2>&1 | grep -iE '^(manifold|cgal) version' || true
