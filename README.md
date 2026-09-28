@@ -86,6 +86,10 @@ specific check meant to catch that defect* is the one reporting FAIL, not
 merely that something went wrong. It runs whenever `tools/` or `lib/` changes,
 which is where a check can quietly stop working.
 
+The drawings are byte-reproducible: matplotlib is told not to stamp a creation
+date, so regenerating a drawing that did not change produces no diff, and "is
+the committed artefact current" stays an answerable question.
+
 Run both locally:
 
 ```bash

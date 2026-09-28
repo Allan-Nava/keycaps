@@ -16,6 +16,11 @@ import sys
 import numpy as np
 import matplotlib
 matplotlib.use("Agg")
+# Deterministic output: without this matplotlib stamps a creation date into
+# every PDF and SVG, so regenerating a drawing that did not change still shows
+# up as a diff and the "is the committed artefact current" question becomes
+# unanswerable.
+matplotlib.rcParams["svg.hashsalt"] = "keycaps"
 import matplotlib.pyplot as plt                                 # noqa: E402
 from matplotlib.lines import Line2D                             # noqa: E402
 import trimesh                                                  # noqa: E402
@@ -189,7 +194,9 @@ def main(scad):
           "dotted green = key pitch envelope", fontsize=10, y=0.985)
     fig.tight_layout(rect=[0, 0.01, 1, 0.965])
     for ext in ("svg", "pdf", "png"):
-        fig.savefig(f"{base}-drawing.{ext}", dpi=170)
+        fig.savefig(f"{base}-drawing.{ext}", dpi=170,
+                    metadata={"Date": None} if ext == "svg" else
+                             ({"CreationDate": None} if ext == "pdf" else {}))
     print(f"wrote {os.path.relpath(base)}-drawing.svg / .pdf / .png")
 
 
