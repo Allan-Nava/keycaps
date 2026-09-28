@@ -5,5 +5,10 @@ trimesh==5.1.0
 manifold3d==3.5.4
 numpy==2.5.3
 rtree==1.4.1
+# trimesh needs these at runtime and does not declare them: scipy for
+# connected-components (mesh.body_count) and networkx for mesh.split().
+# Without them the validator dies halfway through the first check.
+scipy==1.18.1
+networkx==3.7
 # Technical drawings only
 matplotlib==3.11.2
