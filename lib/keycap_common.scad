@@ -25,6 +25,8 @@ $fn = 96;
 // ---------------------------------------------------------------- switches --
 print_orientation = false;   // true = flipped + levelled, ready for the slicer
 stab_style        = "none";  // "none" | "costar"   (see NOTE at the bottom)
+legend_mode       = "emboss";// "emboss" = raised, "deboss" = engraved. Decides
+                             // whether render_keycap()'s child is added or cut.
 
 // ------------------------------------------------------- outside of the cap --
 U            = 19.05;   // [SRC] 1u pitch, ANSI standard
@@ -40,7 +42,9 @@ taper        = 2.10;    // per-side inset of the top plate
 r_bot        = 1.20;    // plan corner radius at the skirt
 r_top        = 2.60;    // plan corner radius at the top plate
 bevel        = 0.60;    // chamfer where the top plate meets the walls
-dish_r       = 28.0;    // cylindrical dish radius, axis along X
+dish_r       = 28.0;    // cylindrical dish radius
+dish_axis    = "x";     // "x" = concave front-to-back (wide keys, 2u and up)
+                        // "y" = concave left-right (1u alphas and small mods)
 dish_depth   = 1.05;    // sag at the centre
 
 // ------------------------------------------------------------ wall / shell --
@@ -54,6 +58,12 @@ roof         = 1.70;    // roof thickness under the dish
 // ------------------------------------------- MX-compatible cross stem -------
 stem_od      = 5.60;    // stem boss OD; stock is ~5.5
 stem_z0      = 0.50;    // bottom face of the stem boss above the rim
+stem_top_gap = 0.90;    // the boss stops this far below the top surface instead
+                        // of running into it. It stays fused to the roof (must
+                        // be < roof), it saves plastic, and it keeps the boss's
+                        // cylindrical seam away from a relief legend sitting on
+                        // the surface - a legend outline tangent to that seam
+                        // is what produces sliver faces and a non-manifold mesh.
 cross_w      = 4.10;    // [SRC] Cherry MX stem cross: 4.1 mm across
 cross_t      = 1.17;    // [SRC] Cherry MX stem cross: 1.17 mm thick
 cross_clr_w  = 0.12;    // FDM tolerance added on the 4.1 mm direction
@@ -73,7 +83,14 @@ hook_len     = 6.00;    // hook block length along X
 hook_w       = 5.50;    // hook block width along Y
 hook_z0      = 2.60;    // bottom face of the hook block above the rim
 
+// ------------------------------------------------------------- lighting ----
+led_clear_h  = 7.00;    // vertical clearance the validator demands in the north
+                        // LED column. 0 = the board has no in-switch LED (SMD
+                        // under the switch), so there is nothing to clear.
+
 // ------------------------------------------------------------ stiffeners ----
+ribs_on      = true;    // 1u / 1.25u caps do not need them: four close walls
+                        // already carry the roof
 rib_t        = 1.20;    // diagonal rib thickness
 rib_len      = 10.0;    // rib length from the key centre outwards
 rib_z0       = 5.00;    // ribs start this high, so the switch top housing and
@@ -107,7 +124,7 @@ module outer_solid() {
         }
         rotate([row_tilt, 0, 0])
             translate([0, 0, h_center + dish_r - dish_depth])
-                rotate([0, 90, 0])
+                rotate(dish_axis == "y" ? [90, 0, 0] : [0, 90, 0])
                     cylinder(h = 4*body_x + 40, r = dish_r, center = true);
     }
 }
@@ -166,9 +183,11 @@ module cross_cut() {
 }
 
 module stem_boss() {
+    assert(stem_top_gap < roof,
+           "stem_top_gap must be smaller than roof, or the boss floats free");
     intersection() {
         translate([0, 0, stem_z0]) cylinder(h = 30, d = stem_od);
-        outer_solid();
+        translate([0, 0, -stem_top_gap]) outer_solid();
     }
 }
 
@@ -199,7 +218,7 @@ module hook_cut(sx) {
 
 // ---- diagonal stiffening ribs ---------------------------------------------
 module ribs() {
-    for (a = [45, 135, 225, 315])
+    if (ribs_on) for (a = [45, 135, 225, 315])
         intersection() {
             rotate([0, 0, a])
                 translate([0, -rib_t/2, rib_z0]) cube([rib_len, rib_t, 30]);
@@ -208,15 +227,30 @@ module ribs() {
 }
 
 // ---- relief legend ---------------------------------------------------------
-//  Takes a 2-D child and lays it on the top surface as raised relief, rooted
-//  0.30 mm into the roof so it fuses instead of floating.
+//  A shell that follows the top surface, from `lo` to `hi` relative to it.
+module surface_shell(lo, hi) {
+    difference() {
+        translate([0, 0, hi]) outer_solid();
+        translate([0, 0, lo]) outer_solid();
+    }
+}
+
+//  Raised relief, rooted 0.30 mm into the roof so it fuses instead of floating.
+//  Keep `h` smaller than the dish depth at that x, or the legend becomes the
+//  lowest point of the print and lifts the cap off the bed.
 module emboss_2d(cx = 0, cy = 0, h = 0.45, grow = 0.25) {
     intersection() {
         translate([cx, cy, 0]) linear_extrude(40) offset(r = grow) children();
-        difference() {
-            translate([0, 0,  h   ]) outer_solid();
-            translate([0, 0, -0.30]) outer_solid();
-        }
+        surface_shell(-0.30, h);
+    }
+}
+
+//  Engraved legend: subtracted by keycap() when legend_mode == "deboss".
+//  Nicer under the finger on an alpha, and it prints as a plain step.
+module engrave_2d(cx = 0, cy = 0, d = 0.40, grow = 0.0) {
+    intersection() {
+        translate([cx, cy, 0]) linear_extrude(40) offset(r = grow) children();
+        surface_shell(-d, 0.30);
     }
 }
 
@@ -236,10 +270,11 @@ module keycap() {
             stem_boss();
             ribs();
             if (stab_style == "costar") { hook_solid(stab_x); hook_solid(-stab_x); }
-            children();                       // legends and any extra relief
+            if (legend_mode == "emboss") children();
         }
         cross_cut();
         if (stab_style == "costar") { hook_cut(stab_x); hook_cut(-stab_x); }
+        if (legend_mode == "deboss") children();
     }
 }
 
@@ -259,9 +294,11 @@ echo("##PARAM", "h_center", h_center);       echo("##PARAM", "row_tilt", row_til
 echo("##PARAM", "taper", taper);             echo("##PARAM", "bevel", bevel);
 echo("##PARAM", "r_bot", r_bot);             echo("##PARAM", "r_top", r_top);
 echo("##PARAM", "dish_r", dish_r);           echo("##PARAM", "dish_depth", dish_depth);
+echo("##PARAM", "dish_axis", dish_axis);     echo("##PARAM", "led_clear_h", led_clear_h);
 echo("##PARAM", "wall", wall);               echo("##PARAM", "wall_skirt", wall_skirt);
 echo("##PARAM", "skirt_z", skirt_z);         echo("##PARAM", "roof", roof);
 echo("##PARAM", "stem_od", stem_od);         echo("##PARAM", "stem_z0", stem_z0);
+echo("##PARAM", "stem_top_gap", stem_top_gap);
 echo("##PARAM", "cross_w", cross_w);         echo("##PARAM", "cross_t", cross_t);
 echo("##PARAM", "cross_clr_w", cross_clr_w); echo("##PARAM", "cross_clr_t", cross_clr_t);
 echo("##PARAM", "cross_depth", cross_depth); echo("##PARAM", "stab_style", stab_style);
@@ -270,6 +307,8 @@ echo("##PARAM", "wire_z", wire_z);           echo("##PARAM", "bore_clr", bore_cl
 echo("##PARAM", "throat_w", throat_w);       echo("##PARAM", "hook_len", hook_len);
 echo("##PARAM", "hook_w", hook_w);           echo("##PARAM", "hook_z0", hook_z0);
 echo("##PARAM", "rib_t", rib_t);             echo("##PARAM", "rib_z0", rib_z0);
+echo("##PARAM", "ribs_on", ribs_on ? 1 : 0);  echo("##PARAM", "bevel", bevel);
+echo("##PARAM", "legend_mode", legend_mode);
 
 // NOTE on stabiliser styles
 //   "costar"  - wire stabiliser, integrated hooks (Ozone Strike Battle, Filco,

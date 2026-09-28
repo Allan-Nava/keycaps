@@ -42,7 +42,7 @@ tools/scadparams.py         reads ##PARAM echoes back out of a render
 | keyboard | key | status |
 |---|---|---|
 | [`ozone-strike-battle`](ozone-strike-battle/) | left Shift, ANSI 2.25u | **done** — all checks pass; one `[FIT]` dimension to measure before printing |
-| [`asus-rog-falchion-ace`](asus-rog-falchion-ace/) | TBD, ITA layout | **scaffold only** — research not started |
+| [`asus-rog-falchion-ace`](asus-rog-falchion-ace/) | left Shift ISO 1.25u, G, ↑ — ITA layout | **done** — all checks pass; profile is estimated, nothing was measured |
 
 ## Usage
 
@@ -66,13 +66,30 @@ python3 -m venv .venv && .venv/bin/pip install trimesh manifold3d numpy rtree ma
 ## Adding a key
 
 1. `cp ozone-strike-battle/left-shift.scad <keyboard>/<key>.scad` and strip it
-   back to the parameters that actually differ.
+   back to the parameters that actually differ. With more than one key on the
+   same board, put the shared parameters in `<keyboard>/profile.inc.scad` —
+   files matching `*.inc.scad` are not treated as keys by the tools.
 2. Override only what you know. Anything left at the library default is an
    estimate by definition — tag it `[EST]` and say so in the README.
 3. Run the validator. It refuses to pass on an unimplemented stabiliser style
    rather than silently skipping the check.
 4. Write `<keyboard>/README.md` with the provenance table, and list what could
    **not** be verified. That section is the point of the repo.
+
+## Two OpenSCAD traps this repo walked into
+
+**An included file's *variable* cannot be referenced from an assignment in the
+including file.** OpenSCAD reports `Ignoring unknown variable` and leaves
+`undef`, which then propagates silently through the whole model. A *function*
+from the same include resolves fine, which is why per-row values are exposed as
+`fa_h(row)` / `fa_tilt(row)` rather than `FA_R4_H`. Module arguments
+(`text(font = fa_font())`) are evaluated later and are also fine.
+
+**A relief legend whose outline is tangent to the stem boss's cylindrical seam
+produces sliver faces and a non-manifold mesh** — clean in OpenSCAD's own
+report, broken on reload. That is why `stem_top_gap` stops the boss 0.90 mm
+below the top surface: the boss stays fused to the roof and its seam never
+reaches the surface where a legend sits.
 
 ## Stabiliser styles
 

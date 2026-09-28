@@ -1,0 +1,24 @@
+== rendering asus-rog-falchion-ace/arrow-up.scad ==
+   wrote asus-rog-falchion-ace/arrow-up.stl
+== mesh integrity ==
+  [PASS] watertight, single closed solid                      watertight=True bodies=1 euler=2
+  [PASS] consistent winding / positive volume                 volume=957.9 mm^3 (~1.19 g PLA solid)
+== outside dimensions ==
+  [PASS] 1u body width (X)                                    18.100 mm  (1u pitch = 19.0500)
+  [PASS] body depth (Y)                                       18.100 mm  (1u pitch = 19.05)
+  [PASS] fits inside the key pitch envelope                   gap to the neighbours = 0.47 mm per side, 0.47 mm front/back
+  [PASS] total height                                         9.86 mm
+== MX cross stem ==
+  [PASS] nominal MX cross (4.10 x 1.17) enters                interference = 0.0000 mm^3
+  [PASS] socket is not oversized (+0.30 probe does clash)     interference = 3.802 mm^3 -> grip present
+  [PASS] stem is centred on the key                           socket centroid X=-0.000 Y=-0.000
+== switch / LED clearance ==
+  [PASS] interior never tighter than a stock cap of the same sculpt worst margin +1.14 mm at z = 0.2 mm (checked to z = 5.0)
+  [info] north LED column                                     not checked: led_clear_h = 0, the board lights each key with an SMD LED under the switch, nothing enters the cap
+== printability ==
+  [PASS] print orientation sits flat on z = 0                 min z = 0.000000
+  [PASS] first layer is the top-plate rim, not a point        196 vertices within 0.25 mm of the bed
+  [PASS] no overhang past 45 deg above the bed                0.0 mm^2 above the dish + 192.4 mm^2 of dish bridged over the bed
+  [info] drafted walls                                        589.1 mm^2 at <=14.9 deg from vertical
+
+RESULT: ALL CHECKS PASSED

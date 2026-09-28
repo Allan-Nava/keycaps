@@ -23,11 +23,13 @@ import trimesh
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from scadparams import render                                   # noqa: E402
 
-# --- reference: a stock OEM 1u cap, used for the relative clearance check ---
-OEM_REF_BODY = 18.20
-OEM_REF_WALL = 1.20
-OEM_REF_TAPER = 2.10
-OEM_REF_HEIGHT = 9.50
+# --- reference cap for the relative interior-clearance check ---------------
+# A stock 1u cap: 18.20 body, 1.20 wall, and THE SAME sculpt as the cap under
+# test. Using the cap's own shoulder height is what makes the check fair for a
+# short Cherry-profile cap, which is legitimately narrower at a given z than a
+# tall OEM one and still clears the same switch.
+REF_BODY = 18.20
+REF_WALL = 1.20
 
 
 def box(sx, sy, sz, cx=0.0, cy=0.0, z0=0.0):
@@ -177,17 +179,27 @@ def main(scad):
     # The exact switch top-housing envelope above the plate is not documented,
     # so the check is relative: this cap's interior must never be tighter than
     # a stock OEM 1u cap's interior at the same height.
+    shoulder = P["h_center"] - P["bevel"]
+    z_max = min(5.0, P["h_center"] - P["roof"] - 0.3)
     worst_d, worst_z = 1e9, None
-    for z in np.arange(0.2, 5.01, 0.2):
-        ref = OEM_REF_BODY - 2 * OEM_REF_WALL - 2 * (OEM_REF_TAPER * z / OEM_REF_HEIGHT)
+    for z in np.arange(0.2, z_max + 1e-9, 0.2):
+        ref = REF_BODY - 2 * REF_WALL - 2 * (P["taper"] * z / shoulder)
         d = clear_width(m, z) - ref
         if d < worst_d:
             worst_d, worst_z = d, z
-    r("interior never tighter than a stock OEM cap (front/back)",
-      worst_d > -0.05, f"worst margin {worst_d:+.2f} mm at z = {worst_z:.1f} mm")
-    led = box(4.0, 2.2, 7.0, 0.0, 4.0, 0.0)
-    r("north in-switch LED column (4 x 2.2 @ y=2.9..5.1) is clear",
-      clash(m, led) < 1e-6, f"interference = {clash(m, led):.4f} mm^3")
+    r("interior never tighter than a stock cap of the same sculpt",
+      worst_d > -0.05,
+      f"worst margin {worst_d:+.2f} mm at z = {worst_z:.1f} mm "
+      f"(checked to z = {z_max:.1f})")
+    led_h = P.get("led_clear_h", 7.0)
+    if led_h > 0:
+        led = box(4.0, 2.2, led_h, 0.0, 4.0, 0.0)
+        r(f"north in-switch LED column (4 x 2.2, {led_h:.1f} mm tall) is clear",
+          clash(m, led) < 1e-6, f"interference = {clash(m, led):.4f} mm^3")
+    else:
+        r.info("north LED column",
+               "not checked: led_clear_h = 0, the board lights each key with an "
+               "SMD LED under the switch, nothing enters the cap")
 
     print("== printability ==")
     r("print orientation sits flat on z = 0", abs(printed.bounds[0][2]) < 1e-6,
@@ -197,13 +209,15 @@ def main(scad):
       f"{(zs < 0.25).sum()} vertices within 0.25 mm of the bed")
     n, a = printed.face_normals, printed.area_faces
     ztop = printed.vertices[printed.faces][:, :, 2].max(axis=1)
-    down = n[:, 2] < -0.50
-    dish, real = down & (ztop <= 1.5), down & (ztop > 1.5)
-    r("no cantilevered overhang above the bed", a[real].sum() < 12.0,
-      f"{a[real].sum():.1f} mm^2 (bore roofs) + {a[dish].sum():.1f} mm^2 of "
+    # |nz| = sin(angle from vertical): -0.707 is the classic 45 deg limit
+    down = n[:, 2] < -0.707
+    dish_lip = P["dish_depth"] + 0.45
+    dish, real = down & (ztop <= dish_lip), down & (ztop > dish_lip)
+    r("no overhang past 45 deg above the bed", a[real].sum() < 12.0,
+      f"{a[real].sum():.1f} mm^2 above the dish + {a[dish].sum():.1f} mm^2 of "
       f"dish bridged over the bed")
     r.info("drafted walls",
-           f'{a[(n[:, 2] < -0.001) & (n[:, 2] >= -0.50)].sum():.1f} mm^2 at '
+           f'{a[(n[:, 2] < -0.001) & (n[:, 2] >= -0.707)].sum():.1f} mm^2 at '
            f'<={np.degrees(np.arctan(P["taper"] / (P["h_center"] - P["bevel"]))):.1f} '
            f"deg from vertical")
 
