@@ -63,6 +63,42 @@ Or `make` (builds and validates everything, then the drawings).
 python3 -m venv .venv && .venv/bin/pip install trimesh manifold3d numpy rtree matplotlib
 ```
 
+## CI
+
+Two workflows, both on every push and pull request.
+
+**[`validate`](.github/workflows/validate.yml)** is the merge gate. It discovers
+every `<keyboard>/<key>.scad` by itself (no list to maintain), renders each one
+on a matrix job and runs the full check suite, then verifies that the
+**committed STL still matches the model** — which is what catches "edited the
+.scad, forgot to regenerate". That last comparison is on the bounding box and
+the volume, not on bytes: tessellation and font substitution differ between a
+Mac and a runner, so a byte compare would be permanently red. A `repo hygiene`
+job checks in parallel that every key has an STL, a validation report and a
+README. On a green push to `main` the printable files go up as a single
+downloadable artifact, so nobody needs OpenSCAD to get them.
+
+**[`self-test`](.github/workflows/selftest.yml)** exists because a check that
+cannot fail is decoration. It breaks a known-good keycap on purpose — socket
+bored out, cap wider than its own pitch, walls thickened past the switch,
+Costar bore under the wire diameter, socket undersized — and asserts that *the
+specific check meant to catch that defect* is the one reporting FAIL, not
+merely that something went wrong. It runs whenever `tools/` or `lib/` changes,
+which is where a check can quietly stop working.
+
+Run both locally:
+
+```bash
+python3 tools/build_and_validate.py --check <keyboard>/<key>.scad
+python3 tools/repo_lint.py
+python3 tools/selftest.py
+```
+
+Ubuntu ships OpenSCAD 2021.01, which predates `--backend=manifold`, so CI
+installs a dated snapshot AppImage — pinned for reproducibility, with a warned
+fallback to the newest when that snapshot rotates off the server. See
+[`.github/scripts/install-openscad.sh`](.github/scripts/install-openscad.sh).
+
 ## Adding a key
 
 1. `cp ozone-strike-battle/left-shift-iso.scad <keyboard>/<key>.scad` and strip it

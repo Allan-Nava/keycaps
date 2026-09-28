@@ -1,0 +1,9 @@
+# Pinned to what the models in this repo were validated with. The geometry
+# checks are boolean operations, so a change of CSG backend is a change of
+# result: pin, do not float.
+trimesh==5.1.0
+manifold3d==3.5.4
+numpy==2.5.3
+rtree==1.4.1
+# Technical drawings only
+matplotlib==3.11.2

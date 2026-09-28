@@ -12,8 +12,17 @@ Every dimension used by the checks is read back out of the render, so this
 file never has to mirror the .scad by hand.
 
 Usage:  python3 tools/build_and_validate.py <keyboard>/<key>.scad
+        python3 tools/build_and_validate.py --check <keyboard>/<key>.scad
+
+--check does not overwrite the committed STL. It renders, runs the same
+checks, and then verifies that the STL already in the repo still matches what
+the .scad produces - which is what catches "edited the model, forgot to
+regenerate". The comparison is on the bounding box and the volume rather than
+on bytes, because OpenSCAD tessellation and font substitution differ between
+machines and versions; see the tolerances below.
 """
 
+import argparse
 import os
 import sys
 
@@ -30,6 +39,13 @@ from scadparams import render                                   # noqa: E402
 # tall OEM one and still clears the same switch.
 REF_BODY = 18.20
 REF_WALL = 1.20
+
+# --- tolerances for --check -------------------------------------------------
+# The bounding box is set by the sculpt parameters alone, so it can be tight.
+# The volume cannot: a text legend is rendered with whatever font fontconfig
+# substitutes, and that differs between a Mac and a CI runner.
+CHECK_BBOX_TOL = 0.02      # mm
+CHECK_VOLUME_TOL = 0.02    # fraction
 
 
 def box(sx, sy, sz, cx=0.0, cy=0.0, z0=0.0):
@@ -84,20 +100,23 @@ class Report:
         print(f"  [info] {name:<52} {detail}")
 
 
-def main(scad):
+def main(scad, check=False, defines=None):
     scad = os.path.abspath(scad)
     base = os.path.splitext(scad)[0]
     name = os.path.basename(base)
     print(f"== rendering {os.path.relpath(scad)} ==")
-    m, P = render(scad, base + "._design.off", False)
-    printed, _ = render(scad, base + "._print.off", True)
+    m, P = render(scad, base + "._design.off", False, extra=defines)
+    printed, _ = render(scad, base + "._print.off", True, extra=defines)
 
     printed.apply_translation((0, 0, -printed.bounds[0][2]))
     c = printed.bounds.mean(axis=0)
     printed.apply_translation((-c[0], -c[1], 0))
     out = base + ".stl"
-    printed.export(out)
-    print(f"   wrote {os.path.relpath(out)}")
+    if check:
+        print(f"   --check: not writing {os.path.relpath(out)}")
+    else:
+        printed.export(out)
+        print(f"   wrote {os.path.relpath(out)}")
 
     lo, hi = m.bounds
     r = Report()
@@ -221,12 +240,47 @@ def main(scad):
            f'<={np.degrees(np.arctan(P["taper"] / (P["h_center"] - P["bevel"]))):.1f} '
            f"deg from vertical")
 
+    if check:
+        print("== committed STL is current ==")
+        if not os.path.exists(out):
+            r(f"{name}.stl exists", False, "missing - run without --check")
+        else:
+            have = trimesh.load(out, process=True)
+            dbox = float(np.abs(have.bounds - printed.bounds).max())
+            dvol = abs(have.volume - printed.volume) / printed.volume
+            r("committed STL matches the .scad (bounding box)",
+              dbox <= CHECK_BBOX_TOL,
+              f"largest corner difference {dbox:.4f} mm "
+              f"(tolerance {CHECK_BBOX_TOL})")
+            r("committed STL matches the .scad (volume)",
+              dvol <= CHECK_VOLUME_TOL,
+              f"{have.volume:.1f} vs {printed.volume:.1f} mm^3, "
+              f"{dvol * 100:.2f}% apart (tolerance "
+              f"{CHECK_VOLUME_TOL * 100:.0f}%)")
+
     print()
     print("RESULT:", "ALL CHECKS PASSED" if r.ok else "SOME CHECKS FAILED")
     return 0 if r.ok else 1
 
 
 if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        sys.exit(__doc__)
-    sys.exit(main(sys.argv[1]))
+    ap = argparse.ArgumentParser(description=__doc__.strip().splitlines()[0])
+    ap.add_argument("scad", help="path to a <keyboard>/<key>.scad")
+    ap.add_argument("--check", action="store_true",
+                    help="do not write the STL; verify the committed one "
+                         "still matches the model")
+    ap.add_argument("-D", "--define", action="append", default=[],
+                    metavar="NAME=VALUE",
+                    help="override a .scad parameter, as openscad -D. Used by "
+                         "tools/selftest.py to break a model on purpose and "
+                         "prove the checks catch it.")
+    a = ap.parse_args()
+    defs = {}
+    for d in a.define:
+        if "=" not in d:
+            ap.error(f"-D expects NAME=VALUE, got {d!r}")
+        k, v = d.split("=", 1)
+        defs[k.strip()] = v.strip()
+    if defs:
+        print(f"== overrides: {defs} ==")
+    sys.exit(main(a.scad, check=a.check, defines=defs or None))

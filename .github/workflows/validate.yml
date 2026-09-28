@@ -1,0 +1,126 @@
+name: validate
+
+# Renders every keycap in the repo and runs the full geometric check suite.
+# A model that does not pass here is a model that will not fit a keyboard, so
+# this is a merge gate, not a nice-to-have.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # See .github/scripts/install-openscad.sh for why this is pinned and what
+  # happens when the snapshot rotates out.
+  OPENSCAD_SNAPSHOT: "2026.09.27"
+
+jobs:
+  discover:
+    name: find keycaps
+    runs-on: ubuntu-latest
+    outputs:
+      keys: ${{ steps.list.outputs.keys }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: list
+        run: |
+          keys="$(python3 tools/list_keys.py)"
+          echo "found: $keys"
+          echo "keys=$keys" >> "$GITHUB_OUTPUT"
+
+  validate:
+    name: ${{ matrix.key }}
+    needs: discover
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        key: ${{ fromJSON(needs.discover.outputs.keys) }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: System libraries and fonts
+        run: |
+          sudo apt-get update -qq
+          # urw-base35 gives fontconfig a metric-compatible Nimbus Sans to
+          # substitute for Helvetica, which a text legend asks for. Without it
+          # the substitute is arbitrary and the engraved glyph changes shape.
+          sudo apt-get install -y --no-install-recommends \
+            fonts-urw-base35 fonts-liberation \
+            libgl1 libglu1-mesa libfontconfig1 libxi6 libxrender1
+
+      - name: Cache OpenSCAD
+        id: cache-openscad
+        uses: actions/cache@v4
+        with:
+          path: /opt/openscad
+          key: openscad-${{ runner.os }}-${{ env.OPENSCAD_SNAPSHOT }}
+
+      - name: Install OpenSCAD
+        if: steps.cache-openscad.outputs.cache-hit != 'true'
+        run: bash .github/scripts/install-openscad.sh
+
+      - name: Link cached OpenSCAD
+        if: steps.cache-openscad.outputs.cache-hit == 'true'
+        run: |
+          sudo ln -sf /opt/openscad/AppRun /usr/local/bin/openscad
+          openscad --version 2>&1 | head -1
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Validate ${{ matrix.key }}
+        run: python tools/build_and_validate.py --check "${{ matrix.key }}"
+
+      - name: Upload the freshly rendered model when a check fails
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: failed-${{ strategy.job-index }}
+          path: |
+            */*._design.off
+            */*._print.off
+          if-no-files-found: ignore
+          retention-days: 7
+
+  lint:
+    name: repo hygiene
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Every keycap has an STL, a validation report and a README
+        run: python3 tools/repo_lint.py
+
+  # One downloadable bundle per green build on main: the colleague does not
+  # need OpenSCAD or Python to get the printable files.
+  bundle:
+    name: printable bundle
+    needs: [validate, lint]
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/upload-artifact@v4
+        with:
+          name: keycaps-stl-and-drawings
+          path: |
+            */*.stl
+            */*-drawing.pdf
+            */*-drawing.svg
+            */README.md
+            */VALIDATION-*.txt
+            README.md
+            LICENSE
+          retention-days: 90

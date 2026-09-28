@@ -1,0 +1,73 @@
+name: self-test
+
+# Who watches the watchmen. `validate` is only worth having if its checks can
+# actually fail, so this breaks a known-good keycap on purpose - one defect at
+# a time - and asserts that the specific check meant to catch that defect is
+# the one that reports FAIL.
+#
+# It runs on any change to the tooling or the shared library, which is where a
+# check can quietly stop working.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "tools/**"
+      - "lib/**"
+      - ".github/workflows/selftest.yml"
+      - requirements.txt
+  pull_request:
+    paths:
+      - "tools/**"
+      - "lib/**"
+      - ".github/workflows/selftest.yml"
+      - requirements.txt
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  OPENSCAD_SNAPSHOT: "2026.09.27"
+
+jobs:
+  selftest:
+    name: the checks can fail
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: System libraries and fonts
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y --no-install-recommends \
+            fonts-urw-base35 fonts-liberation \
+            libgl1 libglu1-mesa libfontconfig1 libxi6 libxrender1
+
+      - name: Cache OpenSCAD
+        id: cache-openscad
+        uses: actions/cache@v4
+        with:
+          path: /opt/openscad
+          key: openscad-${{ runner.os }}-${{ env.OPENSCAD_SNAPSHOT }}
+
+      - name: Install OpenSCAD
+        if: steps.cache-openscad.outputs.cache-hit != 'true'
+        run: bash .github/scripts/install-openscad.sh
+
+      - name: Link cached OpenSCAD
+        if: steps.cache-openscad.outputs.cache-hit == 'true'
+        run: |
+          sudo ln -sf /opt/openscad/AppRun /usr/local/bin/openscad
+          openscad --version 2>&1 | head -1
+
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt
+
+      - name: Break the models on purpose
+        run: python tools/selftest.py
