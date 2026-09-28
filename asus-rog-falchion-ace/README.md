@@ -71,7 +71,7 @@ So the numbers here are built from the one claim both sources agree on —
 **Cherry is 1–2 mm lower than OEM across all rows** — plus this repo's own
 validated OEM cap:
 
-* `../ozone-strike-battle/left-shift` is a validated OEM ZXCV-row cap at
+* `../ozone-strike-battle/left-shift-ansi` is a validated OEM ZXCV-row cap at
   **11.39 mm** overall → Cherry ZXCV ≈ 11.39 − 1.5 = **~9.9 mm**. Modelled:
   9.97 (1.25u) / 9.86 (1u).
 * The **row-to-row delta** (1.37 mm between ZXCV and home) and the **tilts**

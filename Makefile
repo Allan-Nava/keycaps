@@ -5,7 +5,8 @@ KEYS := $(filter-out lib/% %.inc.scad,$(wildcard */*.scad))
 all: validate drawings
 
 validate:
-	@for k in $(KEYS); do $(PY) tools/build_and_validate.py $$k | tee $$(dirname $$k)/VALIDATION.txt; done
+	@for k in $(KEYS); do $(PY) tools/build_and_validate.py $$k \
+	    | tee $$(dirname $$k)/VALIDATION-$$(basename $$k .scad).txt; done
 
 drawings:
 	@for k in $(KEYS); do $(PY) tools/make_drawing.py $$k; done

@@ -1,5 +1,5 @@
-== rendering ozone-strike-battle/left-shift.scad ==
-   wrote ozone-strike-battle/left-shift.stl
+== rendering ozone-strike-battle/left-shift-ansi.scad ==
+   wrote ozone-strike-battle/left-shift-ansi.stl
 == mesh integrity ==
   [PASS] watertight, single closed solid                      watertight=True bodies=1 euler=2
   [PASS] consistent winding / positive volume                 volume=2731.7 mm^3 (~3.39 g PLA solid)
@@ -20,12 +20,12 @@
   [PASS] wire arm clears the cavity from x=+-3.2 to +-18.5    worst interference = 0.0000 mm^3 (stem boss, ribs and walls all missed)
   [PASS] throat retains the wire (interference is intentional) 0.02 mm^3 of PLA must flex to snap the wire in
 == switch / LED clearance ==
-  [PASS] interior never tighter than a stock OEM cap (front/back) worst margin +0.01 mm at z = 0.2 mm
-  [PASS] north in-switch LED column (4 x 2.2 @ y=2.9..5.1) is clear interference = 0.0000 mm^3
+  [PASS] interior never tighter than a stock cap of the same sculpt worst margin +0.00 mm at z = 0.2 mm (checked to z = 5.0)
+  [PASS] north in-switch LED column (4 x 2.2, 7.0 mm tall) is clear interference = 0.0000 mm^3
 == printability ==
   [PASS] print orientation sits flat on z = 0                 min z = 0.000000
   [PASS] first layer is the top-plate rim, not a point        119 vertices within 0.25 mm of the bed
-  [PASS] no cantilevered overhang above the bed               4.6 mm^2 (bore roofs) + 532.1 mm^2 of dish bridged over the bed
-  [info] drafted walls                                        1372.7 mm^2 at <=11.8 deg from vertical
+  [PASS] no overhang past 45 deg above the bed                1.0 mm^2 above the dish + 532.1 mm^2 of dish bridged over the bed
+  [info] drafted walls                                        1376.3 mm^2 at <=11.8 deg from vertical
 
 RESULT: ALL CHECKS PASSED

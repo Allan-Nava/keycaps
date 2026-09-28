@@ -1,29 +1,42 @@
-# Ozone Strike Battle — replacement LEFT SHIFT keycap (ANSI 2.25u)
+# Ozone Strike Battle — replacement LEFT SHIFT keycap
 
-Cherry MX cross stem · Costar (Filco-style) wire stabiliser · OEM-like sculpt ·
-designed for FDM in PLA / PETG.
+Cherry MX cross stem, OEM-like sculpt, designed for FDM in PLA / PETG.
+**Two variants, and they are not interchangeable — pick by your layout:**
+
+| variant | file | size | stabiliser | fits |
+|---|---|---|---|---|
+| **ISO** | `left-shift-iso.stl` | **1.25u**, 22.85 × 18.10 × 11.39 | **none** | ITA / UK / DE — a `<>` or `\|` key sits next to the left Shift, and the Enter is the tall L |
+| ANSI | `left-shift-ansi.stl` | 2.25u, 41.90 × 18.10 × 11.39 | Costar wire, integrated hooks | US — Z is directly next to the left Shift, and the Enter is a flat 2.25u bar |
+
+Look at your own board before printing. On an ISO keyboard the left Shift is
+split into a 1.25u Shift plus the extra `<>` key, so it is short and carries no
+stabiliser at all; on ANSI it is one 2.25u key on a 2u Costar wire.
+
+The **ISO cap is the simpler of the two**: no stabiliser means the one
+fit-critical, unverifiable dimension of the ANSI cap (§1) does not exist for it.
+If you are on ISO, you can print straight away.
 
 | file | what it is |
 |---|---|
-| `left-shift.stl` | **production STL**, already in print orientation (top plate on the bed, levelled, centred, min z = 0) |
-| `left-shift.scad` | parametric source — every dimension is a named parameter tagged `[SRC] [DER] [EST] [FIT]` |
-| `left-shift-drawing.svg` / `.pdf` / `.png` | dimensioned drawing, 4 views. Outlines are real cross-sections of the rendered solid, so they cannot drift from the model |
-| `../tools/build_and_validate.py` | renders the `.scad` and runs the 20-check validation suite (boolean probes, not eyeballing) |
-| `VALIDATION.txt` | output of the last run — **ALL CHECKS PASSED** |
-| `../tools/make_drawing.py` | regenerates the drawing from the rendered solid |
-| `preview-top.png`, `preview-underside.png` | renders |
+| `left-shift-iso.*` / `left-shift-ansi.*` | STL, parametric source, dimensioned drawing, renders |
+| `VALIDATION-left-shift-iso.txt` / `-ansi.txt` | validation output — **ALL CHECKS PASSED** for both |
 
-Rebuild everything:
+Rebuild:
 
 ```bash
-python3 build_and_validate.py && python3 make_drawing.py
+python3 ../tools/build_and_validate.py left-shift-iso.scad
+python3 ../tools/make_drawing.py       left-shift-iso.scad
 ```
 
-(needs `openscad` ≥ 2024 with the manifold backend, plus `trimesh manifold3d numpy rtree matplotlib`)
+Everything below — provenance, profile, print settings — applies to both caps.
+The parts that are specific to the Costar stabiliser are marked as such and are
+simply absent from the ISO variant.
 
 ---
 
-## 1. Read this before you print — the one dimension I could not verify
+## 1. ANSI variant only — the one dimension I could not verify
+
+*(The ISO 1.25u cap has no stabiliser, so none of this section applies to it.)*
 
 **`wire_z = 4.20 mm`** — the height of the Costar wire stub above the bottom rim
 of the keycap. This is the single fit-critical dimension that is **not documented

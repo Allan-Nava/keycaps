@@ -1,5 +1,5 @@
 // ============================================================================
-//  Ozone Strike Battle - replacement LEFT SHIFT keycap (ANSI 2.25u)
+//  Ozone Strike Battle - LEFT SHIFT, ANSI 2.25u (stabilised, Costar)
 //  Cherry MX cross stem, Costar (Filco-style) wire stabiliser interface,
 //  OEM-like sculpted profile, designed for FDM printing in PLA / PETG.
 //

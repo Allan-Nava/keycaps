@@ -34,21 +34,21 @@ tools/scadparams.py         reads ##PARAM echoes back out of a render
 <keyboard>/<key>.stl        production STL, already in print orientation
 <keyboard>/<key>-drawing.*  svg / pdf / png
 <keyboard>/README.md        provenance, critical dimensions, print settings
-<keyboard>/VALIDATION.txt   output of the last validation run
+<keyboard>/VALIDATION-<key>.txt   output of the last validation run
 ```
 
 ## Keyboards
 
 | keyboard | key | status |
 |---|---|---|
-| [`ozone-strike-battle`](ozone-strike-battle/) | left Shift, ANSI 2.25u | **done** — all checks pass; one `[FIT]` dimension to measure before printing |
+| [`ozone-strike-battle`](ozone-strike-battle/) | left Shift — **ISO 1.25u** and ANSI 2.25u | **done** — all checks pass. ISO prints as-is; the ANSI one has one `[FIT]` dimension to measure first |
 | [`asus-rog-falchion-ace`](asus-rog-falchion-ace/) | left Shift ISO 1.25u, G, ↑ — ITA layout | **done** — all checks pass; profile is estimated, nothing was measured |
 
 ## Usage
 
 ```bash
-python3 tools/build_and_validate.py ozone-strike-battle/left-shift.scad
-python3 tools/make_drawing.py       ozone-strike-battle/left-shift.scad
+python3 tools/build_and_validate.py ozone-strike-battle/left-shift-iso.scad
+python3 tools/make_drawing.py       ozone-strike-battle/left-shift-iso.scad
 ```
 
 Or `make` (builds and validates everything, then the drawings).
@@ -65,7 +65,7 @@ python3 -m venv .venv && .venv/bin/pip install trimesh manifold3d numpy rtree ma
 
 ## Adding a key
 
-1. `cp ozone-strike-battle/left-shift.scad <keyboard>/<key>.scad` and strip it
+1. `cp ozone-strike-battle/left-shift-iso.scad <keyboard>/<key>.scad` and strip it
    back to the parameters that actually differ. With more than one key on the
    same board, put the shared parameters in `<keyboard>/profile.inc.scad` —
    files matching `*.inc.scad` are not treated as keys by the tools.
