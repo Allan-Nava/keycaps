@@ -91,6 +91,15 @@ report, broken on reload. That is why `stem_top_gap` stops the boss 0.90 mm
 below the top surface: the boss stays fused to the roof and its seam never
 reaches the surface where a legend sits.
 
+## Licence
+
+[MIT](LICENSE) — the OpenSCAD sources, the Python tooling and the generated
+STLs alike. Print them, sell the prints, fork the lot; just keep the notice.
+
+**No warranty, and that matters here more than usual**: several dimensions in
+every model are estimates, and each keyboard's README says exactly which ones.
+Test-fit a print on a spare switch before committing to a set.
+
 ## Stabiliser styles
 
 `lib/keycap_common.scad` implements:
