@@ -8,6 +8,10 @@ Cherry MX cross stem, OEM-like sculpt, designed for FDM in PLA / PETG.
 | **ISO** | `left-shift-iso.stl` | **1.25u**, 22.85 × 18.10 × 11.39 | **none** | ITA / UK / DE — a `<>` or `\|` key sits next to the left Shift, and the Enter is the tall L |
 | ANSI | `left-shift-ansi.stl` | 2.25u, 41.90 × 18.10 × 11.39 | Costar wire, integrated hooks | US — Z is directly next to the left Shift, and the Enter is a flat 2.25u bar |
 
+The board this was built for is an **ISO Italian** Strike Battle. ITA, UK and DE
+share the same 1.25u left Shift — only the glyph on the key next to it differs
+(`<>` on ITA, `\|` on UK) — so the ISO cap covers all three.
+
 Look at your own board before printing. On an ISO keyboard the left Shift is
 split into a 1.25u Shift plus the extra `<>` key, so it is short and carries no
 stabiliser at all; on ANSI it is one 2.25u key on a 2u Costar wire.

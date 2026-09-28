@@ -6,8 +6,10 @@
 //  Costar wire interface live in left-shift-ansi.scad - the two are not
 //  interchangeable.
 //
-//  Confirmed from the user's own keyboard: a <> key sits next to the left
-//  Shift, and the Enter is the tall ISO L.
+//  Confirmed from the user's own keyboard (ISO Italian): a <> key sits next to
+//  the left Shift, and the Enter is the tall ISO L. ITA, UK and DE all share
+//  the same 1.25u left Shift - only the glyph on the neighbouring key differs
+//  (<> on ITA, \| on UK), so this one cap covers all three.
 //
 //  Everything except the width and the stabiliser is shared with the ANSI cap,
 //  so the provenance of each dimension is the same - see ./README.md.
