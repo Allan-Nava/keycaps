@@ -63,6 +63,18 @@ Or `make` (builds and validates everything, then the drawings).
 python3 -m venv .venv && .venv/bin/pip install trimesh manifold3d numpy rtree matplotlib
 ```
 
+## Printed
+
+![first print](photos/first-print.webp)
+
+The first model off the plate, 2026-10-02. It sliced with no support in the
+committed orientation, which is the part the geometric checks predicted.
+
+What this photo does **not** prove is the part that matters: whether it seats
+on a real switch. Until a cap has been pushed onto one, the stem clearances
+are still the estimates the provenance tables say they are. See
+[`photos/`](photos/) for what a print does and does not establish.
+
 ## The catalogue
 
 **<https://allan-nava.github.io/keycaps/>** — every model with its dimensions,
