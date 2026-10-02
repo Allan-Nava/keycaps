@@ -105,6 +105,16 @@ def collect():
     return boards
 
 
+def photos():
+    """Images in photos/, newest name last. Data-driven: drop a file in and it
+    appears, so the page cannot claim a print that is not there."""
+    d = os.path.join(ROOT, "photos")
+    if not os.path.isdir(d):
+        return []
+    return [os.path.join(d, f) for f in sorted(os.listdir(d))
+            if f.lower().endswith((".webp", ".jpg", ".jpeg", ".png"))]
+
+
 def board_title(board):
     path = os.path.join(ROOT, board, "README.md")
     if os.path.exists(path):
@@ -266,6 +276,10 @@ def build(outdir):
                 shutil.copy2(path, os.path.join(assets,
                                                 os.path.basename(path)))
 
+    shots = photos()
+    for path in shots:
+        shutil.copy2(path, os.path.join(assets, os.path.basename(path)))
+
     sections = []
     for board in sorted(boards):
         items = sorted(boards[board], key=lambda k: k["stem"])
@@ -281,6 +295,27 @@ def build(outdir):
         for k in items:
             for t in TAGS:
                 all_prov[t] += k["provenance"][t]
+
+    if shots:
+        imgs = "".join(
+            f'<div class="card"><div class="shot"><img loading="lazy" '
+            f'src="assets/{e(os.path.basename(p))}" '
+            f'alt="a printed keycap on the build plate"></div></div>'
+            for p in shots)
+        printed_block = f"""
+<h2>Printed</h2>
+<p class="lede">Everything above is geometry: a solid is rendered, boolean
+probes are pushed into it, and the numbers are recorded. That catches a great
+deal and it cannot catch anything that only exists once plastic cools.</p>
+<div class="grid">{imgs}</div>
+<p class="note">A photo is not a check — it is the thing a check cannot be.
+These prove the geometry is sliceable, that the committed orientation works
+and that no support was needed, which is what the checks predicted. They do
+<strong>not</strong> prove the cap seats on a real switch, and that is the row
+that matters: until one has, the stem clearances are still the estimates the
+provenance tables say they are.</p>"""
+    else:
+        printed_block = ""
 
     page = f"""<!DOCTYPE html>
 <html lang="en"><head>
@@ -325,6 +360,8 @@ is measured. A second CI workflow breaks each model on purpose to prove those
 checks can actually fail — a check that never fails is decoration.</p>
 
 {"".join(sections)}
+
+{printed_block}
 
 <h2>Printing</h2>
 <p class="lede">Every STL is already oriented: top plate flat on the bed, open
